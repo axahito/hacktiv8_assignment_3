@@ -8,5 +8,5 @@ type Item struct {
 	Item_Code   int    `json:"item_code"`
 	Description string `json:"description"`
 	Quantity    int    `json:"quantity"`
-	OrderID     Order  `json:"order_id"`
+	OrderID     int    `json:"order_id"`
 }
