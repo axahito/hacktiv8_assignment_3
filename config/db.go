@@ -37,7 +37,7 @@ func SetupDB() {
 		fmt.Println("successfully connected to database")
 	}
 
-	db.AutoMigrate(models.Customer{})
+	// db.AutoMigrate(models.Customer{})
 	db.AutoMigrate(models.Order{})
 	db.AutoMigrate(models.Item{})
 }
