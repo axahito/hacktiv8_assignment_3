@@ -14,7 +14,7 @@ func IndexOrder(ctx *gin.Context) {
 	var result gin.H
 	db := config.GetDB()
 
-	db.Preload("Orders").Find(&orders)
+	db.Preload("Items").Find(&orders)
 	if len(orders) <= 0 {
 		result = gin.H{
 			"result": nil,
@@ -36,29 +36,25 @@ func ShowOrder(ctx *gin.Context) {
 	db := config.GetDB()
 	id := ctx.Param("order")
 
-	err := db.Where("id = ?", id).Preload("Customer").First(&order).Error
+	err := db.Where("id = ?", id).Preload("Items").First(&order).Error
 	if err != nil {
-		ctx.AbortWithError(http.StatusInternalServerError, err)
+		ctx.AbortWithError(http.StatusNotFound, err)
 		return
 	} else {
 		result = gin.H{
 			"result": order,
 		}
 	}
-
 	ctx.JSON(http.StatusOK, result)
-
 }
 
 func CreateOrder(ctx *gin.Context) {
 	var order models.Order
-	var customer models.Customer
 	var result gin.H
 	db := config.GetDB()
 	ctx.Bind(&order)
-	ctx.Bind(&customer)
 
-	err := db.Model(&order).Association("Customer").Append(&customer)
+	err := db.Create(&order).Error
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
@@ -71,14 +67,18 @@ func CreateOrder(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, result)
 }
 
+// broken
 func UpdateOrder(ctx *gin.Context) {
 	var order models.Order
 	var newOrder models.Order
+	// var items []models.Item
+	var newItems []models.Item
 	var result gin.H
 	db := config.GetDB()
 	id := ctx.Param("order")
-	fmt.Println("order id : ", id)
 	ctx.Bind(&newOrder)
+	ctx.Bind(&newItems)
+	fmt.Println(newItems)
 
 	err := db.First(&order, id).Error
 	if err != nil {
@@ -87,14 +87,15 @@ func UpdateOrder(ctx *gin.Context) {
 		}
 	}
 
-	err = db.Model(&order).Updates(newOrder).Error
+	err = db.Model(&order).Updates(newOrder).Association("Item").Replace(newItems)
 	if err != nil {
 		result = gin.H{
 			"result": "Update Failed",
 		}
 	} else {
 		result = gin.H{
-			"result": "Update Success",
+			"result":        "Update Success",
+			"updated order": order,
 		}
 	}
 
