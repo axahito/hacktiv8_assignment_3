@@ -9,40 +9,40 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func IndexCustomer(ctx *gin.Context) {
-	var customers []models.Customer
+func IndexOrder(ctx *gin.Context) {
+	var orders []models.Order
 	var result gin.H
 	db := config.GetDB()
 
-	db.Preload("Orders").Find(&customers)
-	if len(customers) <= 0 {
+	db.Preload("Orders").Find(&orders)
+	if len(orders) <= 0 {
 		result = gin.H{
 			"result": nil,
 			"count":  0,
 		}
 	} else {
 		result = gin.H{
-			"result": customers,
-			"count":  len(customers),
+			"result": orders,
+			"count":  len(orders),
 		}
 	}
 
 	ctx.JSON(http.StatusOK, result)
 }
 
-func ShowCustomer(ctx *gin.Context) {
-	var customer models.Customer
+func ShowOrder(ctx *gin.Context) {
+	var order models.Order
 	var result gin.H
 	db := config.GetDB()
-	id := ctx.Param("customer")
+	id := ctx.Param("order")
 
-	err := db.Where("id = ?", id).Preload("Orders").First(&customer).Error
+	err := db.Where("id = ?", id).Preload("Customer").First(&order).Error
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	} else {
 		result = gin.H{
-			"result": customer,
+			"result": order,
 		}
 	}
 
@@ -50,42 +50,44 @@ func ShowCustomer(ctx *gin.Context) {
 
 }
 
-func CreateCustomer(ctx *gin.Context) {
+func CreateOrder(ctx *gin.Context) {
+	var order models.Order
 	var customer models.Customer
 	var result gin.H
 	db := config.GetDB()
+	ctx.Bind(&order)
 	ctx.Bind(&customer)
 
-	err := db.Create(&customer).Error
+	err := db.Model(&order).Association("Customer").Append(&customer)
 	if err != nil {
 		ctx.AbortWithError(http.StatusInternalServerError, err)
 		return
 	}
 
 	result = gin.H{
-		"new Customer": customer,
+		"new order": order,
 	}
 
 	ctx.JSON(http.StatusOK, result)
 }
 
-func UpdateCustomer(ctx *gin.Context) {
-	var customer models.Customer
-	var newCustomer models.Customer
+func UpdateOrder(ctx *gin.Context) {
+	var order models.Order
+	var newOrder models.Order
 	var result gin.H
 	db := config.GetDB()
-	id := ctx.Param("customer")
-	fmt.Println("customer id : ", id)
-	ctx.Bind(&newCustomer)
+	id := ctx.Param("order")
+	fmt.Println("order id : ", id)
+	ctx.Bind(&newOrder)
 
-	err := db.First(&customer, id).Error
+	err := db.First(&order, id).Error
 	if err != nil {
 		result = gin.H{
 			"result": "Data not found",
 		}
 	}
 
-	err = db.Model(&customer).Updates(newCustomer).Error
+	err = db.Model(&order).Updates(newOrder).Error
 	if err != nil {
 		result = gin.H{
 			"result": "Update Failed",
@@ -99,20 +101,20 @@ func UpdateCustomer(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, result)
 }
 
-func DeleteCustomer(ctx *gin.Context) {
-	var customer models.Customer
+func DeleteOrder(ctx *gin.Context) {
+	var order models.Order
 	var result gin.H
 	db := config.GetDB()
-	id := ctx.Param("customer")
+	id := ctx.Param("order")
 
-	err := db.First(&customer, id).Error
+	err := db.First(&order, id).Error
 	if err != nil {
 		result = gin.H{
 			"result": "data not found",
 		}
 	}
 
-	err = db.Delete(&customer).Error
+	err = db.Delete(&order).Error
 	if err != nil {
 		result = gin.H{
 			"result": "delete failed",

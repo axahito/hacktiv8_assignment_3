@@ -4,23 +4,31 @@ import (
 	"fmt"
 	"hacktiv8_assignment_3/models"
 	"log"
+	"os"
 
+	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
 var (
-	host     = "localhost"
-	user     = "postgres"
-	password = "akahito"
-	dbPort   = "5432"
-	dbname   = "hacktiv8_assignment3"
-	db       *gorm.DB
-	err      error
+	db  *gorm.DB
+	err error
 )
 
-func StartDB() {
-	config := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable", host, user, password, dbname, dbPort)
+func SetupDB() {
+	err = godotenv.Load()
+	if err != nil {
+		log.Fatal("error reading .env file : ", err)
+	}
+
+	host := os.Getenv("DB_HOST")
+	user := os.Getenv("DB_USER")
+	password := os.Getenv("DB_PASSWORD")
+	name := os.Getenv("DB_NAME")
+	port := os.Getenv("DB_PORT")
+
+	config := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable", host, user, password, name, port)
 
 	db, err = gorm.Open(postgres.Open(config), &gorm.Config{})
 	if err != nil {
@@ -36,4 +44,13 @@ func StartDB() {
 
 func GetDB() *gorm.DB {
 	return db
+}
+
+func CloseDB(db *gorm.DB) {
+	var dbSql, err = db.DB()
+	if err != nil {
+		log.Fatal("failed to close database connection : ", err)
+	}
+
+	dbSql.Close()
 }

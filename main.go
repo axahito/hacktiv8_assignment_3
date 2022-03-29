@@ -7,6 +7,6 @@ import (
 
 func main() {
 	PORT := ":8080"
-	config.StartDB()
+	config.SetupDB()
 	routes.Serve().Run(PORT)
 }
